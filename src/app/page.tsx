@@ -1,7 +1,7 @@
 "use client";
 
+import KanbanBoard from "@/components/KanbanBoard";
 import React from "react";
-import KanbanBoard from "./components/KanbanBoard";
 
 const Home: React.FC = () => {
   return (

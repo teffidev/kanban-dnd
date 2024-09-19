@@ -1,5 +1,7 @@
 "use client";
 
+import React, { useState } from "react";
+import { v4 as uuidv4 } from "uuid";
 import {
   closestCorners,
   DndContext,
@@ -10,9 +12,9 @@ import {
   useSensors,
 } from "@dnd-kit/core";
 import { arrayMove, sortableKeyboardCoordinates } from "@dnd-kit/sortable";
-import React, { useState } from "react";
-import Column from "./Column";
-import Task from "./Task";
+import Column from "../Column";
+import Status from "../Status";
+import ModalAddItem from "../Modal";
 
 type TaskType = {
   id: string;
@@ -27,7 +29,7 @@ type ColumnTyep = {
 
 const initialColumns: ColumnTyep[] = [
   {
-    id: "todo",
+    id: "status1",
     title: "To Do",
     tasks: [
       {
@@ -41,7 +43,7 @@ const initialColumns: ColumnTyep[] = [
     ],
   },
   {
-    id: "doing",
+    id: "status2",
     title: "Doing",
     tasks: [
       {
@@ -55,7 +57,7 @@ const initialColumns: ColumnTyep[] = [
     ],
   },
   {
-    id: "done",
+    id: "status3",
     title: "Done",
     tasks: [
       {
@@ -74,12 +76,55 @@ const KanbanBoard = () => {
   const [columns, setColumns] = useState<ColumnTyep[]>(initialColumns);
   const [activeId, setActiveId] = useState<string | null>(null);
 
+  const [showAddItemModal, setShowAddItemModal] = useState(false);
+  const [itemName, setItemName] = useState("");
+  const [currentColumnId, setCurrentColumnId] = useState<string | null>(null);
+
   const sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
     })
   );
+
+  const onAddItem = () => {
+    if (!itemName || !currentColumnId) return;
+  
+    const newItem: TaskType = {
+      id: uuidv4(),
+      content: itemName,
+    };
+  
+    setColumns((prevColumns) =>
+      prevColumns.map((column) =>
+        column.id === currentColumnId
+          ? { ...column, tasks: [...column.tasks, newItem] }
+          : column
+      )
+    );
+  
+    setItemName("");
+    setShowAddItemModal(false);
+    setCurrentColumnId(null);
+  };
+
+  const handleAddItemClick = (columnId: string) => {
+    setCurrentColumnId(columnId);
+    setShowAddItemModal(true);
+  };
+
+  const handleDeleteItem = (itemId: string) => {
+    setColumns((prevColumns) => {
+      const newColumns = prevColumns.map((column) => {
+        const newTasks = column.tasks.filter((task) => task.id !== itemId);
+        if (newTasks.length !== column.tasks.length) {
+          return { ...column, tasks: newTasks };
+        }
+        return column;
+      });
+      return newColumns;
+    });
+  };
 
   const handleDragStart = (event: any) => {
     const { active } = event;
@@ -121,7 +166,7 @@ const KanbanBoard = () => {
           active.rect.current.translated &&
           active.rect.current.translated.top > over.rect.top + over.rect.height;
 
-        const modifier = isBelowOverItem ? -1 : 0;
+        const modifier = isBelowOverItem ? 1 : 0;
 
         newIndex = overIndex >= 0 ? overIndex + modifier : overItems.length + 1;
       }
@@ -184,30 +229,60 @@ const KanbanBoard = () => {
   };
 
   return (
-    <DndContext
-      sensors={sensors}
-      collisionDetection={closestCorners}
-      onDragStart={handleDragStart}
-      onDragOver={handleDragOver}
-      onDragEnd={handleDragEnd}>
-      <div className="flex gap-4 p-4">
-        {columns.map((column) => (
-          <Column key={column.id} column={column} />
-        ))}
-      </div>
-      <DragOverlay>
-        {activeId ? (
-          <Task
-            id={activeId}
-            content={
-              columns
-                .flatMap((col) => col.tasks)
-                .find((task) => task.id === activeId)?.content || ""
-            }
+    <div className="mx-auto max-w-7xl py-10 px-3 sm:px-6 lg:px-8">
+      {/* Add item Modal */}
+      <ModalAddItem
+        showModal={showAddItemModal}
+        setShowModal={setShowAddItemModal}>
+        <div className="flex flex-col w-full items-start gap-y-4">
+          <h1 className="text-gray-800 text-3xl font-bold">Add Item</h1>
+          <input
+            type="text"
+            placeholder="Item Title"
+            name="itemname"
+            value={itemName}
+            onChange={(e) => setItemName(e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
           />
-        ) : null}
-      </DragOverlay>
-    </DndContext>
+          <button
+            onClick={onAddItem}
+            className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+            Add Item
+          </button>
+        </div>
+      </ModalAddItem>
+
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCorners}
+        onDragStart={handleDragStart}
+        onDragOver={handleDragOver}
+        onDragEnd={handleDragEnd}>
+        <div className="flex gap-4 p-4">
+          {columns.map((column) => (
+            <Column
+              key={column.id}
+              column={column}
+              onAddItem={() => handleAddItemClick(column.id)}
+              onDeleteItem={() => handleDeleteItem(column.id)}
+            />
+          ))}
+        </div>
+        <DragOverlay>
+          {activeId ? (
+            <Status
+              id={activeId}
+              content={
+                columns
+                  .flatMap((col) => col.tasks)
+                  .find((task) => task.id === activeId)?.content || ""
+              }
+              onDelete={() => {}}
+            />
+          ) : null}
+        </DragOverlay>
+      </DndContext>
+    </div>
   );
 };
 
