@@ -52,7 +52,7 @@ const ModalAddItem: React.FC<ModalAddItemProps> = ({
                 }
               }}
               className="fixed inset-0 z-40 hidden min-h-screen items-center justify-center md:flex">
-              <div className="overflow relative w-full mas-w-lg transform rounded-xl border border-gray-200 bg-white p-6 text-left shadow-2xl transition-all">
+              <div className="overflow relative w-full max-w-lg transform rounded-xl border border-gray-200 bg-white p-6 text-left shadow-2xl transition-all">
                 {children}
               </div>
             </motion.div>

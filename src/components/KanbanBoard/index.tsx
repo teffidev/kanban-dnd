@@ -30,43 +30,174 @@ type ColumnTyep = {
 const initialColumns: ColumnTyep[] = [
   {
     id: "status1",
-    title: "To Do",
+    title: "Revisión de documentos",
     tasks: [
       {
         id: "1",
-        content: "Buy milk",
+        content: "Factura comercial",
       },
       {
         id: "2",
-        content: "Buy bread",
+        content: "Lista de empaque",
+      },
+      {
+        id: "3",
+        content: "Shipping Mark",
+      },
+      {
+        id: "4",
+        content: "Datos comerciales",
+      },
+      {
+        id: "5",
+        content: "Credenciales Ecuapass",
+      },
+      {
+        id: "6",
+        content: "RUC",
+      },
+      {
+        id: "7",
+        content: "PDF - Cédula, Papeleta de votación",
       },
     ],
   },
   {
     id: "status2",
-    title: "Doing",
+    title: "Pre liquidación",
     tasks: [
       {
-        id: "3",
-        content: "Buy apples",
-      },
-      {
-        id: "4",
-        content: "Buy pears",
+        id: "8",
+        content: "Enviar Email a cliente: Pre liquidación PDF",
       },
     ],
   },
   {
     id: "status3",
-    title: "Done",
+    title: "Carga x arribar a bodega",
     tasks: [
       {
-        id: "5",
-        content: "Buy oranges",
+        id: "9",
+        content: "Enviar Email a cliente: Fecha de corte",
+      },
+    ],
+  },
+  {
+    id: "status4",
+    title: "Carga lista para zarpar",
+    tasks: [
+      {
+        id: "10",
+        content: "Enviar Email a cliente: ETD: APROX.",
       },
       {
-        id: "6",
-        content: "Buy eggs",
+        id: "11",
+        content: "Enviar Email a cliente: ETA: APROX.",
+      },
+    ],
+  },
+  {
+    id: "status5",
+    title: "Zarpe confirmado",
+    tasks: [
+      {
+        id: "12",
+        content: "Enviar Email a cliente: Fecha de zarpe",
+      },
+    ],
+  },
+  {
+    id: "status6",
+    title: "En tránsito",
+    tasks: [
+      {
+        id: "13",
+        content: "Rastreo",
+      },
+    ],
+  },
+  {
+    id: "status7",
+    title: "Arribo confirmado",
+    tasks: [
+      {
+        id: "14",
+        content: "Día y hora Manifiesto",
+      },
+    ],
+  },
+  {
+    id: "status8",
+    title: "En puerto de destino",
+    tasks: [
+      {
+        id: "15",
+        content: "MRN",
+      },
+      {
+        id: "16",
+        content: "TARJA",
+      },
+      {
+        id: "17",
+        content: "CAS",
+      },
+    ],
+  },
+  {
+    id: "status9",
+    title: "Nacionalización y Aforo",
+    tasks: [
+      {
+        id: "18",
+        content:
+          "Preliminar DAI: Liquidación de aprobación, liquidación final(Pago), información del pago",
+      },
+      {
+        id: "19",
+        content: "Documento de Aforo",
+      },
+      {
+        id: "20",
+        content: "Registro de posesionamiento (Físico)",
+      },
+      {
+        id: "21",
+        content: "Registro fotográfico (Aforo físico)",
+      },
+      {
+        id: "22",
+        content: "Observaciones",
+      },
+    ],
+  },
+  {
+    id: "status10",
+    title: "Carga por liberarse",
+    tasks: [
+      {
+        id: "23",
+        content: "Carga por liberarse",
+      },
+    ],
+  },
+  {
+    id: "status11",
+    title: "Ultima Milla",
+    tasks: [
+      {
+        id: "24",
+        content: "Ultima milla",
+      },
+    ],
+  },
+  {
+    id: "status12",
+    title: "Entregado",
+    tasks: [
+      {
+        id: "25",
+        content: "Entregado",
       },
     ],
   },
@@ -89,12 +220,12 @@ const KanbanBoard = () => {
 
   const onAddItem = () => {
     if (!itemName || !currentColumnId) return;
-  
+
     const newItem: TaskType = {
       id: uuidv4(),
       content: itemName,
     };
-  
+
     setColumns((prevColumns) =>
       prevColumns.map((column) =>
         column.id === currentColumnId
@@ -102,7 +233,7 @@ const KanbanBoard = () => {
           : column
       )
     );
-  
+
     setItemName("");
     setShowAddItemModal(false);
     setCurrentColumnId(null);
@@ -229,25 +360,27 @@ const KanbanBoard = () => {
   };
 
   return (
-    <div className="mx-auto max-w-7xl py-10 px-3 sm:px-6 lg:px-8">
+    <div className="mx-auto max-w-7xl py-10 px-3 sm:px-6 lg:px-8 bg-white">
       {/* Add item Modal */}
       <ModalAddItem
         showModal={showAddItemModal}
         setShowModal={setShowAddItemModal}>
         <div className="flex flex-col w-full items-start gap-y-4">
-          <h1 className="text-gray-800 text-3xl font-bold">Add Item</h1>
+          <h1 className="text-gray-800 text-xl font-bold">
+            Agregar nuevo ítem
+          </h1>
           <input
             type="text"
-            placeholder="Item Title"
+            placeholder="Escribe aquí el nuevo ítem"
             name="itemname"
             value={itemName}
             onChange={(e) => setItemName(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+            className="border p-2 w-full rounded-lg shadow-lg hover:shadow-xl focus:outline-none focus:ring-orange-500 focus:border-orange-500"
           />
           <button
             onClick={onAddItem}
-            className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-            Add Item
+            className="px-4 py-2 shadow-lg bg-orange-600 text-white rounded-md hover:bg-orange-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500">
+            Agregar
           </button>
         </div>
       </ModalAddItem>
@@ -258,13 +391,13 @@ const KanbanBoard = () => {
         onDragStart={handleDragStart}
         onDragOver={handleDragOver}
         onDragEnd={handleDragEnd}>
-        <div className="flex gap-4 p-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
           {columns.map((column) => (
             <Column
               key={column.id}
               column={column}
               onAddItem={() => handleAddItemClick(column.id)}
-              onDeleteItem={() => handleDeleteItem(column.id)}
+              onDeleteItem={handleDeleteItem}
             />
           ))}
         </div>

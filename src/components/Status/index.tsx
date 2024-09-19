@@ -25,21 +25,21 @@ const Status: React.FC<StatusProps> = ({ id, content, onDelete }) => {
   return (
     <>
       <li
-        ref={setNodeRef}
-        style={style}
-        {...attributes}
-        {...listeners}
-        className="bg-white p-2 rounded shadow-sm flex justify-between items-center">
-        <span>{content}</span>
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onDelete();
-          }}
-          className="text-red-500 hover:text-red-700 focus:outline-none">
-          <XMarkIcon className="h-5 w-5" />
-        </button>
-      </li>
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+      {...listeners}
+      className="bg-white p-2 rounded-lg shadow-lg flex justify-between items-center border border-gray-200">
+      <span className="text-black">{content}</span>
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          onDelete();
+        }}
+        className="text-red-500 hover:text-red-700 focus:outline-none">
+        <XMarkIcon className="h-5 w-5" />
+      </button>
+    </li>
     </>
   );
 };

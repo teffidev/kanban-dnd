@@ -24,12 +24,14 @@ const Column: React.FC<ColumnProps> = ({ column, onAddItem, onDeleteItem }) => {
   });
 
   return (
-    <div className="bg-gray-100 p-4 rounded-lg shadow-md w-80">
-      <h2>{column.title}</h2>
+    <div className="bg-gray-100 p-4 rounded-lg shadow-md w-full">
+      <h2 className="text-lg font-semibold mb-4 text-black">{column.title}</h2>
       <SortableContext
         items={column.tasks.map((task) => task.id)}
         strategy={verticalListSortingStrategy}>
-        <ul ref={setNodeRef} className="list-none p-0 flex flex-col gap-2">
+        <ul
+          ref={setNodeRef}
+          className="list-none p-0 flex flex-col gap-2 min-h-[100px]">
           {column.tasks.map((task) => (
             <Status
               key={task.id}
@@ -40,11 +42,13 @@ const Column: React.FC<ColumnProps> = ({ column, onAddItem, onDeleteItem }) => {
           ))}
         </ul>
       </SortableContext>
-      <button
-        onClick={onAddItem}
-        className="mt-4 w-full px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-        Add Item
-      </button>
+      <div className="flex justify-center">
+        <button
+          onClick={onAddItem}
+          className="mt-4 w-auto px-4 py-2 shadow-lg bg-orange-500 text-white rounded-md hover:bg-orange-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500">
+          Agregar ítem
+        </button>
+      </div>
     </div>
   );
 };
