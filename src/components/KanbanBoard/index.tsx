@@ -1,25 +1,33 @@
-'use client'
+"use client";
 
-import React, { useState, useEffect } from 'react'
-import { DndContext, closestCorners, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
-import { arrayMove, sortableKeyboardCoordinates } from '@dnd-kit/sortable'
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Progress } from "@/components/ui/progress"
-import Column from '../Column'
-import Item from '../Item'
+import React, { useState, useEffect } from "react";
+import {
+  DndContext,
+  closestCorners,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
+import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
+import Column from "../Column";
+import Item from "../Item";
+import { toast } from "@/hooks/use-toast";
 
 type Task = {
-  id: string
-  content: string
-  completed: boolean
-  action: () => void
-}
+  id: string;
+  content: string;
+  completed: boolean;
+  action: () => void;
+};
 
 type Column = {
-  id: string
-  title: string
-  tasks: Task[]
-}
+  id: string;
+  title: string;
+  tasks: Task[];
+};
 
 const initialColumns: Column[] = [
   {
@@ -248,71 +256,101 @@ const initialColumns: Column[] = [
 ];
 
 export default function ProgressiveKanban() {
-  const [columns, setColumns] = useState<Column[]>(initialColumns)
-  const [currentColumnIndex, setCurrentColumnIndex] = useState(0)
-  const [item, setItem] = useState({ id: 'item1', tasks: [] as Task[] })
+  const [columns, setColumns] = useState<Column[]>(initialColumns);
+  const [currentColumnIndex, setCurrentColumnIndex] = useState(0);
+  const [item, setItem] = useState({ id: "item1", tasks: [] as Task[] });
 
   const sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
     })
-  )
+  );
 
   useEffect(() => {
-    setItem(prevItem => ({
+    setItem((prevItem) => ({
       ...prevItem,
-      tasks: columns.slice(0, currentColumnIndex + 1).flatMap(col => col.tasks)
-    }))
-  }, [currentColumnIndex, columns])
+      tasks: columns
+        .slice(0, currentColumnIndex + 1)
+        .flatMap((col) => col.tasks),
+    }));
+  }, [currentColumnIndex, columns]);
 
   const handleDragEnd = (event: any) => {
-    const { active, over } = event
+    const { active, over } = event;
 
     if (active.id === item.id && over?.id) {
-      // const oldIndex = columns.findIndex(col => col.id === columns[currentColumnIndex].id)
-      const newIndex = columns.findIndex(col => col.id === over.id)
+      const newIndex = columns.findIndex((col) => col.id === over.id);
 
       if (currentColumnIndex !== newIndex) {
-        setCurrentColumnIndex(newIndex)
-        // setColumns(arrayMove(columns, oldIndex, newIndex))
+        const currentTasks = columns[currentColumnIndex].tasks;
+        const allTasksCompleted = currentTasks.every((task) => task.completed);
+
+        if (allTasksCompleted) {
+          setCurrentColumnIndex(newIndex);
+        } else {
+          toast({
+            title: "No se puede mover",
+            description:
+              "Completa todas las tareas antes de pasar a la siguiente columna.",
+            variant: "destructive",
+          });
+        }
       }
     }
-  }
+  };
 
   const handleTaskCompletion = (taskId: string) => {
-    setItem(prevItem => ({
+    setColumns((prevColumns) => {
+      return prevColumns.map((column, index) => {
+        if (index === currentColumnIndex) {
+          return {
+            ...column,
+            tasks: column.tasks.map((task) =>
+              task.id === taskId
+                ? { ...task, completed: !task.completed }
+                : task
+            ),
+          };
+        }
+        return column;
+      });
+    });
+
+    // Actualizar el estado del item
+    setItem((prevItem) => ({
       ...prevItem,
-      tasks: prevItem.tasks.map(task => 
+      tasks: prevItem.tasks.map((task) =>
         task.id === taskId ? { ...task, completed: !task.completed } : task
-      )
-    }))
+      ),
+    }));
+  };
 
-    setColumns(prevColumns => {
-      return prevColumns.map(column => ({
-        ...column,
-        tasks: column.tasks.map(task => 
-          task.id === taskId ? { ...task, completed: !task.completed } : task
-        )
-      }))
-    })
-  }
-
-  const currentProgress = (currentColumnIndex / (columns.length - 1)) * 100
+  const currentProgress = (currentColumnIndex / (columns.length - 1)) * 100;
 
   return (
-    <DndContext sensors={sensors} collisionDetection={closestCorners} onDragEnd={handleDragEnd}>
+    <DndContext
+      sensors={sensors}
+      collisionDetection={closestCorners}
+      onDragEnd={handleDragEnd}>
       <Card className="w-full max-w-7xl mx-auto bg-white">
         <CardHeader className="bg-black text-white">
           <CardTitle>Progreso del Ítem</CardTitle>
-          <Progress value={currentProgress} className="w-full bg-white [&>div]:bg-orange-500" />
+          <Progress
+            value={currentProgress}
+            className="w-full bg-white [&>div]:bg-orange-500"
+          />
         </CardHeader>
         <CardContent className="p-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {columns.map((column, index) => (
-              <Column key={column.id} column={column} isActive={index === currentColumnIndex}>
+              <Column
+                key={column.id}
+                column={column}
+                isActive={index === currentColumnIndex}>
                 {index === currentColumnIndex && (
                   <Item
+                    key={item.id}
                     item={item}
                     onTaskCompletion={handleTaskCompletion}
                   />
@@ -323,5 +361,5 @@ export default function ProgressiveKanban() {
         </CardContent>
       </Card>
     </DndContext>
-  )
+  );
 }

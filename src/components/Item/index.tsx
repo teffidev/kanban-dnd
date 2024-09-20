@@ -1,3 +1,5 @@
+'use client'
+
 import React from 'react'
 import { useDraggable } from '@dnd-kit/core'
 import { CSS } from '@dnd-kit/utilities'
@@ -27,7 +29,7 @@ export default function Item({ item, onTaskCompletion }: ItemProps) {
   }
 
   return (
-    <div ref={setNodeRef} style={style} {...attributes} {...listeners} className="bg-white p-4 rounded-lg shadow-md">
+    <div ref={setNodeRef} style={style} {...attributes} {...listeners} className="bg-white p-4 rounded-lg shadow-md cursor-move">
       {item.tasks.map(task => (
         <div key={task.id} className="flex items-center justify-between space-x-2 mb-2">
           <div className="flex items-center space-x-2">
