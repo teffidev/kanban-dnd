@@ -1,33 +1,27 @@
-"use client";
+'use client'
 
-import React, { useState } from "react";
-import { v4 as uuidv4 } from "uuid";
-import {
-  closestCorners,
-  DndContext,
-  DragOverlay,
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
-  useSensors,
-} from "@dnd-kit/core";
-import { arrayMove, sortableKeyboardCoordinates } from "@dnd-kit/sortable";
-import Column from "../Column";
-import Status from "../Status";
-import ModalAddItem from "../Modal";
+import React, { useState, useEffect } from 'react'
+import { DndContext, closestCorners, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
+import { arrayMove, sortableKeyboardCoordinates } from '@dnd-kit/sortable'
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Progress } from "@/components/ui/progress"
+import Column from '../Column'
+import Item from '../Item'
 
-type TaskType = {
-  id: string;
-  content: string;
-};
+type Task = {
+  id: string
+  content: string
+  completed: boolean
+  action: () => void
+}
 
-type ColumnTyep = {
-  id: string;
-  title: string;
-  tasks: TaskType[];
-};
+type Column = {
+  id: string
+  title: string
+  tasks: Task[]
+}
 
-const initialColumns: ColumnTyep[] = [
+const initialColumns: Column[] = [
   {
     id: "status1",
     title: "Revisión de documentos",
@@ -35,30 +29,44 @@ const initialColumns: ColumnTyep[] = [
       {
         id: "1",
         content: "Factura comercial",
+        completed: false,
+        action: () => {},
       },
       {
         id: "2",
         content: "Lista de empaque",
+        completed: false,
+        action: () => {},
       },
       {
         id: "3",
         content: "Shipping Mark",
+        completed: false,
+        action: () => {},
       },
       {
         id: "4",
         content: "Datos comerciales",
+        completed: false,
+        action: () => {},
       },
       {
         id: "5",
         content: "Credenciales Ecuapass",
+        completed: false,
+        action: () => {},
       },
       {
         id: "6",
         content: "RUC",
+        completed: false,
+        action: () => {},
       },
       {
         id: "7",
         content: "PDF - Cédula, Papeleta de votación",
+        completed: false,
+        action: () => {},
       },
     ],
   },
@@ -69,6 +77,8 @@ const initialColumns: ColumnTyep[] = [
       {
         id: "8",
         content: "Enviar Email a cliente: Pre liquidación PDF",
+        completed: false,
+        action: () => {},
       },
     ],
   },
@@ -79,6 +89,8 @@ const initialColumns: ColumnTyep[] = [
       {
         id: "9",
         content: "Enviar Email a cliente: Fecha de corte",
+        completed: false,
+        action: () => {},
       },
     ],
   },
@@ -89,10 +101,14 @@ const initialColumns: ColumnTyep[] = [
       {
         id: "10",
         content: "Enviar Email a cliente: ETD: APROX.",
+        completed: false,
+        action: () => {},
       },
       {
         id: "11",
         content: "Enviar Email a cliente: ETA: APROX.",
+        completed: false,
+        action: () => {},
       },
     ],
   },
@@ -103,6 +119,8 @@ const initialColumns: ColumnTyep[] = [
       {
         id: "12",
         content: "Enviar Email a cliente: Fecha de zarpe",
+        completed: false,
+        action: () => {},
       },
     ],
   },
@@ -113,6 +131,8 @@ const initialColumns: ColumnTyep[] = [
       {
         id: "13",
         content: "Rastreo",
+        completed: false,
+        action: () => {},
       },
     ],
   },
@@ -123,6 +143,8 @@ const initialColumns: ColumnTyep[] = [
       {
         id: "14",
         content: "Día y hora Manifiesto",
+        completed: false,
+        action: () => {},
       },
     ],
   },
@@ -133,14 +155,20 @@ const initialColumns: ColumnTyep[] = [
       {
         id: "15",
         content: "MRN",
+        completed: false,
+        action: () => {},
       },
       {
         id: "16",
         content: "TARJA",
+        completed: false,
+        action: () => {},
       },
       {
         id: "17",
         content: "CAS",
+        completed: false,
+        action: () => {},
       },
     ],
   },
@@ -152,22 +180,32 @@ const initialColumns: ColumnTyep[] = [
         id: "18",
         content:
           "Preliminar DAI: Liquidación de aprobación, liquidación final(Pago), información del pago",
+        completed: false,
+        action: () => {},
       },
       {
         id: "19",
         content: "Documento de Aforo",
+        completed: false,
+        action: () => {},
       },
       {
         id: "20",
         content: "Registro de posesionamiento (Físico)",
+        completed: false,
+        action: () => {},
       },
       {
         id: "21",
         content: "Registro fotográfico (Aforo físico)",
+        completed: false,
+        action: () => {},
       },
       {
         id: "22",
         content: "Observaciones",
+        completed: false,
+        action: () => {},
       },
     ],
   },
@@ -178,6 +216,8 @@ const initialColumns: ColumnTyep[] = [
       {
         id: "23",
         content: "Carga por liberarse",
+        completed: false,
+        action: () => {},
       },
     ],
   },
@@ -188,6 +228,8 @@ const initialColumns: ColumnTyep[] = [
       {
         id: "24",
         content: "Ultima milla",
+        completed: false,
+        action: () => {},
       },
     ],
   },
@@ -198,225 +240,88 @@ const initialColumns: ColumnTyep[] = [
       {
         id: "25",
         content: "Entregado",
+        completed: false,
+        action: () => {},
       },
     ],
   },
 ];
 
-const KanbanBoard = () => {
-  const [columns, setColumns] = useState<ColumnTyep[]>(initialColumns);
-  const [activeId, setActiveId] = useState<string | null>(null);
-
-  const [showAddItemModal, setShowAddItemModal] = useState(false);
-  const [itemName, setItemName] = useState("");
-  const [currentColumnId, setCurrentColumnId] = useState<string | null>(null);
+export default function ProgressiveKanban() {
+  const [columns, setColumns] = useState<Column[]>(initialColumns)
+  const [currentColumnIndex, setCurrentColumnIndex] = useState(0)
+  const [item, setItem] = useState({ id: 'item1', tasks: [] as Task[] })
 
   const sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
     })
-  );
+  )
 
-  const onAddItem = () => {
-    if (!itemName || !currentColumnId) return;
-
-    const newItem: TaskType = {
-      id: uuidv4(),
-      content: itemName,
-    };
-
-    setColumns((prevColumns) =>
-      prevColumns.map((column) =>
-        column.id === currentColumnId
-          ? { ...column, tasks: [...column.tasks, newItem] }
-          : column
-      )
-    );
-
-    setItemName("");
-    setShowAddItemModal(false);
-    setCurrentColumnId(null);
-  };
-
-  const handleAddItemClick = (columnId: string) => {
-    setCurrentColumnId(columnId);
-    setShowAddItemModal(true);
-  };
-
-  const handleDeleteItem = (itemId: string) => {
-    setColumns((prevColumns) => {
-      const newColumns = prevColumns.map((column) => {
-        const newTasks = column.tasks.filter((task) => task.id !== itemId);
-        if (newTasks.length !== column.tasks.length) {
-          return { ...column, tasks: newTasks };
-        }
-        return column;
-      });
-      return newColumns;
-    });
-  };
-
-  const handleDragStart = (event: any) => {
-    const { active } = event;
-    if (active.id !== activeId) {
-      setActiveId(active.id);
-    }
-  };
-
-  const handleDragOver = (event: any) => {
-    const { active, over } = event;
-
-    if (!over) return;
-
-    const activeColumn = columns.find((col) =>
-      col.tasks.some((task) => task.id === active.id)
-    );
-    const overColumn = columns.find(
-      (col) =>
-        col.id === over.id || col.tasks.some((task) => task.id === over.id)
-    );
-
-    if (!activeColumn || !overColumn || activeColumn === overColumn) return;
-
-    setColumns((cols) => {
-      const activeItems = activeColumn.tasks;
-      const overItems = overColumn.tasks;
-
-      const activeIndex = activeItems.findIndex(
-        (item) => item.id === active.id
-      );
-      const overIndex = overItems.findIndex((item) => item.id === over.id);
-
-      let newIndex: number;
-      if (over.id in columns) {
-        newIndex = overItems.length + 1;
-      } else {
-        const isBelowOverItem =
-          over &&
-          active.rect.current.translated &&
-          active.rect.current.translated.top > over.rect.top + over.rect.height;
-
-        const modifier = isBelowOverItem ? 1 : 0;
-
-        newIndex = overIndex >= 0 ? overIndex + modifier : overItems.length + 1;
-      }
-
-      return cols.map((col) => {
-        if (col.id === activeColumn.id) {
-          return {
-            ...col,
-            tasks: col.tasks.filter((item) => item.id !== active.id),
-          };
-        } else if (col.id === overColumn.id) {
-          return {
-            ...col,
-            tasks: [
-              ...col.tasks.slice(0, newIndex),
-              columns
-                .flatMap((col) => col.tasks)
-                .find((task) => task.id === active.id)!,
-              ...col.tasks.slice(newIndex),
-            ],
-          };
-        } else {
-          return col;
-        }
-      });
-    });
-  };
+  useEffect(() => {
+    setItem(prevItem => ({
+      ...prevItem,
+      tasks: columns.slice(0, currentColumnIndex + 1).flatMap(col => col.tasks)
+    }))
+  }, [currentColumnIndex, columns])
 
   const handleDragEnd = (event: any) => {
-    const { active, over } = event;
-    if (!over) return;
+    const { active, over } = event
 
-    const activeColumn = columns.find((col) =>
-      col.tasks.some((task) => task.id === active.id)
-    );
-    const overColumn = columns.find(
-      (col) =>
-        col.id === over.id || col.tasks.some((task) => task.id === over.id)
-    );
+    if (active.id === item.id && over?.id) {
+      // const oldIndex = columns.findIndex(col => col.id === columns[currentColumnIndex].id)
+      const newIndex = columns.findIndex(col => col.id === over.id)
 
-    if (!activeColumn || !overColumn || activeColumn === overColumn) return;
-
-    const activeIndex = activeColumn.tasks.findIndex(
-      (task) => task.id === active.id
-    );
-    const overIndex = overColumn.tasks.findIndex((task) => task.id === over.id);
-
-    if (activeIndex !== overIndex) {
-      setColumns((cols) => {
-        const newTasks = arrayMove(overColumn.tasks, activeIndex, overIndex);
-        return cols.map((col) => {
-          if (col.id === overColumn.id) {
-            return { ...col, tasks: newTasks };
-          }
-          return col;
-        });
-      });
+      if (currentColumnIndex !== newIndex) {
+        setCurrentColumnIndex(newIndex)
+        // setColumns(arrayMove(columns, oldIndex, newIndex))
+      }
     }
-    setActiveId(null);
-  };
+  }
+
+  const handleTaskCompletion = (taskId: string) => {
+    setItem(prevItem => ({
+      ...prevItem,
+      tasks: prevItem.tasks.map(task => 
+        task.id === taskId ? { ...task, completed: !task.completed } : task
+      )
+    }))
+
+    setColumns(prevColumns => {
+      return prevColumns.map(column => ({
+        ...column,
+        tasks: column.tasks.map(task => 
+          task.id === taskId ? { ...task, completed: !task.completed } : task
+        )
+      }))
+    })
+  }
+
+  const currentProgress = (currentColumnIndex / (columns.length - 1)) * 100
 
   return (
-    <div className="mx-auto max-w-7xl py-10 px-3 sm:px-6 lg:px-8 bg-white">
-      {/* Add item Modal */}
-      <ModalAddItem
-        showModal={showAddItemModal}
-        setShowModal={setShowAddItemModal}>
-        <div className="flex flex-col w-full items-start gap-y-4">
-          <h1 className="text-gray-800 text-xl font-bold">
-            Agregar nuevo ítem
-          </h1>
-          <input
-            type="text"
-            placeholder="Escribe aquí el nuevo ítem"
-            name="itemname"
-            value={itemName}
-            onChange={(e) => setItemName(e.target.value)}
-            className="border p-2 w-full rounded-lg shadow-lg hover:shadow-xl focus:outline-none focus:ring-orange-500 focus:border-orange-500"
-          />
-          <button
-            onClick={onAddItem}
-            className="px-4 py-2 shadow-lg bg-orange-600 text-white rounded-md hover:bg-orange-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500">
-            Agregar
-          </button>
-        </div>
-      </ModalAddItem>
-
-      <DndContext
-        sensors={sensors}
-        collisionDetection={closestCorners}
-        onDragStart={handleDragStart}
-        onDragOver={handleDragOver}
-        onDragEnd={handleDragEnd}>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
-          {columns.map((column) => (
-            <Column
-              key={column.id}
-              column={column}
-              onAddItem={() => handleAddItemClick(column.id)}
-              onDeleteItem={handleDeleteItem}
-            />
-          ))}
-        </div>
-        <DragOverlay>
-          {activeId ? (
-            <Status
-              id={activeId}
-              content={
-                columns
-                  .flatMap((col) => col.tasks)
-                  .find((task) => task.id === activeId)?.content || ""
-              }
-              onDelete={() => {}}
-            />
-          ) : null}
-        </DragOverlay>
-      </DndContext>
-    </div>
-  );
-};
-
-export default KanbanBoard;
+    <DndContext sensors={sensors} collisionDetection={closestCorners} onDragEnd={handleDragEnd}>
+      <Card className="w-full max-w-7xl mx-auto bg-white">
+        <CardHeader className="bg-black text-white">
+          <CardTitle>Progreso del Ítem</CardTitle>
+          <Progress value={currentProgress} className="w-full bg-white [&>div]:bg-orange-500" />
+        </CardHeader>
+        <CardContent className="p-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {columns.map((column, index) => (
+              <Column key={column.id} column={column} isActive={index === currentColumnIndex}>
+                {index === currentColumnIndex && (
+                  <Item
+                    item={item}
+                    onTaskCompletion={handleTaskCompletion}
+                  />
+                )}
+              </Column>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    </DndContext>
+  )
+}
