@@ -288,6 +288,13 @@ export default function ProgressiveKanban() {
 
         if (allTasksCompleted) {
           setCurrentColumnIndex(newIndex);
+          setItem((prevItem) => ({
+            ...prevItem,
+            tasks: [
+              ...prevItem.tasks,
+              ...columns[newIndex].tasks.map(task => ({ ...task, completed: false }))
+            ],
+          }));
         } else {
           toast({
             title: "No se puede mover",
