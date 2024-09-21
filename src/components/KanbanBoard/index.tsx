@@ -292,7 +292,10 @@ export default function ProgressiveKanban() {
             ...prevItem,
             tasks: [
               ...prevItem.tasks,
-              ...columns[newIndex].tasks.map(task => ({ ...task, completed: false }))
+              ...columns[newIndex].tasks.map((task) => ({
+                ...task,
+                completed: false,
+              })),
             ],
           }));
         } else {
@@ -335,6 +338,10 @@ export default function ProgressiveKanban() {
 
   const currentProgress = (currentColumnIndex / (columns.length - 1)) * 100;
 
+  const allTasksCompleted = columns[currentColumnIndex].tasks.every(
+    (task) => task.completed
+  );
+
   return (
     <DndContext
       sensors={sensors}
@@ -343,10 +350,15 @@ export default function ProgressiveKanban() {
       <Card className="w-full max-w-7xl mx-auto bg-white">
         <CardHeader className="bg-black text-white">
           <CardTitle>Progreso del Ítem</CardTitle>
-          <Progress
-            value={currentProgress}
-            className="w-full bg-white [&>div]:bg-orange-500"
-          />
+          <div className="flex items-center space-x-2">
+            <Progress
+              value={currentProgress}
+              className="w-full bg-white [&>div]:bg-orange-500"
+            />
+            <span className="text-sm font-medium">
+              {currentProgress.toFixed(0)}%
+            </span>
+          </div>
         </CardHeader>
         <CardContent className="p-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -360,6 +372,9 @@ export default function ProgressiveKanban() {
                     key={item.id}
                     item={item}
                     onTaskCompletion={handleTaskCompletion}
+                    allTasksCompleted={allTasksCompleted}
+                    currentColumnIndex={currentColumnIndex}
+                    columnsLength={columns.length}
                   />
                 )}
               </Column>

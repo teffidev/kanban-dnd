@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef, useState } from "react";
+import React, {useState } from "react";
 import { useDraggable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -18,9 +18,18 @@ type ItemProps = {
     }[];
   };
   onTaskCompletion: (taskId: string) => void;
+  allTasksCompleted: boolean;
+  currentColumnIndex: number;
+  columnsLength: number;
 };
 
-export default function Item({ item, onTaskCompletion }: ItemProps) {
+export default function Item({
+  item,
+  onTaskCompletion,
+  allTasksCompleted,
+  currentColumnIndex,
+  columnsLength,
+}: ItemProps) {
   const { attributes, listeners, setNodeRef, transform } = useDraggable({
     id: item.id,
   });
@@ -29,26 +38,7 @@ export default function Item({ item, onTaskCompletion }: ItemProps) {
     transform: CSS.Translate.toString(transform),
   };
 
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const [showTasks, setShowTasks] = useState(false);
-
-  const handleMouseDown = (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
-    if ((e.target as HTMLElement).closest("button")) {
-      return;
-    }
-    timeoutRef.current = setTimeout(() => {
-      timeoutRef.current = null;
-    }, 200);
-  };
-
-  const handleMouseUp = (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
-    if ((e.target as HTMLElement).closest("button")) {
-      return;
-    }
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-    }
-  };
+  const [showCompletedTasks, setShowCompletedTasks] = useState(false);
 
   const completedTasks = item.tasks.filter((task) => task.completed);
   const incompleteTasks = item.tasks.filter((task) => !task.completed);
@@ -57,32 +47,37 @@ export default function Item({ item, onTaskCompletion }: ItemProps) {
     <div
       ref={setNodeRef}
       style={style}
-      className="bg-white p-4 rounded-lg shadow-md relative"
-      onMouseDown={handleMouseDown}
-      onMouseUp={handleMouseUp}
-    >
-      <div
-        {...attributes}
-        {...listeners}
-        className="absolute right-8 top-2.5 cursor-move rounded-full bg-white border p-2 shadow-lg"
-      >
-        <GripVertical className="h-5 w-5 text-orange-500" />
-      </div>
-      
+      className="bg-white p-4 rounded-lg shadow-md relative">
+      {allTasksCompleted && currentColumnIndex < columnsLength - 1 && (
+        <div
+          {...attributes}
+          {...listeners}
+          className="absolute right-4 top-2 cursor-move">
+          <Button
+            variant="outline"
+            size="sm"
+            className="bg-orange-500 text-white hover:bg-orange-600 hover:text-white flex items-center space-x-2">
+            <span>Continuar al siguiente estado</span>
+            <GripVertical className="h-4 w-4" />
+          </Button>
+        </div>
+      )}
+
       <div className="mt-10">
         {incompleteTasks.map((task) => (
-          <div key={task.id} className="flex items-center justify-between space-x-2 mb-2">
+          <div
+            key={task.id}
+            className="flex items-center justify-between space-x-2 mb-2">
             <div className="flex items-center space-x-2">
               <Checkbox
                 id={task.id}
                 checked={task.completed}
                 onCheckedChange={() => onTaskCompletion(task.id)}
-                className="border-orange-500 text-orange-500 focus:ring-orange-500"
+                className="border-orange-500 text-orange-500 focus:ring-orange-500 shadow-lg"
               />
               <label
                 htmlFor={task.id}
-                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-black"
-              >
+                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-black">
                 {task.content}
               </label>
             </div>
@@ -90,8 +85,7 @@ export default function Item({ item, onTaskCompletion }: ItemProps) {
               onClick={task.action}
               variant="outline"
               size="sm"
-              className="bg-orange-500 text-white hover:bg-orange-600"
-            >
+              className="bg-orange-500 text-white hover:bg-orange-600 hover:text-white shadow-lg">
               Acción
             </Button>
           </div>
@@ -100,18 +94,23 @@ export default function Item({ item, onTaskCompletion }: ItemProps) {
         {completedTasks.length > 0 && (
           <div className="mt-4">
             <Button
-              onClick={() => setShowTasks(!showTasks)}
+              onClick={() => setShowCompletedTasks(!showCompletedTasks)}
               variant="outline"
               size="sm"
-              className="w-full flex justify-between items-center"
-            >
+              className="w-full flex justify-between items-center">
               Tareas completadas ({completedTasks.length})
-              {showTasks ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+              {showCompletedTasks ? (
+                <ChevronUp className="h-4 w-4" />
+              ) : (
+                <ChevronDown className="h-4 w-4" />
+              )}
             </Button>
-            {showTasks && (
+            {showCompletedTasks && (
               <div className="mt-2">
                 {completedTasks.map((task) => (
-                  <div key={task.id} className="flex items-center justify-between space-x-2 mb-2">
+                  <div
+                    key={task.id}
+                    className="flex items-center justify-between space-x-2 mb-2">
                     <div className="flex items-center space-x-2">
                       <Checkbox
                         id={task.id}
@@ -121,19 +120,10 @@ export default function Item({ item, onTaskCompletion }: ItemProps) {
                       />
                       <label
                         htmlFor={task.id}
-                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-black"
-                      >
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-black">
                         {task.content}
                       </label>
                     </div>
-                    <Button
-                      onClick={task.action}
-                      variant="outline"
-                      size="sm"
-                      className="bg-orange-500 text-white hover:bg-orange-600"
-                    >
-                      Acción
-                    </Button>
                   </div>
                 ))}
               </div>
